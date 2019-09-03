@@ -19,15 +19,18 @@
         <nav class="text-light">
           <ul>
             <li><a href="{% url 'blog:new_post' %}">New post</a></li>
-            <li><a href="{% url 'blog:index' %}">View posts</a></li>
+            <li>View post</li>
           </ul>
         </nav>
       </div>
       <div class="col-9 border bg-light">
-        {% for post in object_list %}
-        <h2>{{ post.title }}</h2>
-        <p>{{ post.content }}</p>
-        {% endfor %}
+        <h1>Create New Blog</h1>
+        <table>
+          <form method="post" action="">{% csrf_token %}
+            {{ form.as_table }}
+            <t><td colspan="2"><input type="submit" value="Save Post" /> <input type="reset" value="Clear Data" /></td></t>
+          </form>
+        </table>
       </div>
     </div>
   </div>
