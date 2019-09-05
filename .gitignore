@@ -105,3 +105,9 @@ venv.bak/
 
 # Jetbrain
 .idea/
+
+# virtual machine
+.vagrant/
+
+# collected static files
+staticfiles/
