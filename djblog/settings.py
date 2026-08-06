@@ -104,6 +104,33 @@ else:
         }
     }
 
+# Redis & Distributed Session Configuration for Multi-Pod Scaling
+REDIS_URL = os.environ.get('REDIS_URL', '')
+if not REDIS_URL and os.environ.get('REDIS_HOST'):
+    redis_host = os.environ.get('REDIS_HOST', 'localhost')
+    redis_port = os.environ.get('REDIS_PORT', '6379')
+    redis_db = os.environ.get('REDIS_DB', '0')
+    redis_password = os.environ.get('REDIS_PASSWORD', '')
+    if redis_password:
+        REDIS_URL = f"redis://:{redis_password}@{redis_host}:{redis_port}/{redis_db}"
+    else:
+        REDIS_URL = f"redis://{redis_host}:{redis_port}/{redis_db}"
+
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+else:
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {

@@ -12,6 +12,17 @@ if [ -n "$DB_HOST" ]; then
     echo "[entrypoint] Database connection verified!"
 fi
 
+# Wait for Redis connection if REDIS_HOST is set
+if [ -n "$REDIS_HOST" ]; then
+    R_P="${REDIS_PORT:-6379}"
+    echo "[entrypoint] Checking Redis availability at $REDIS_HOST:$R_P..."
+    while ! python -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(2); s.connect(('$REDIS_HOST', int('$R_P')))" 2>/dev/null; do
+        echo "[entrypoint] Waiting for Redis connection..."
+        sleep 2
+    done
+    echo "[entrypoint] Redis connection verified!"
+fi
+
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     echo "[entrypoint] Applying database migrations..."
     python manage.py migrate --noinput
