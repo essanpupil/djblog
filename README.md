@@ -70,20 +70,6 @@ The compose setup includes:
 
 The development web service mounts the project source code and a named staticfiles volume so changes are reflected immediately.
 
-A minimal observability stack is included for development:
-
-- Prometheus (http://localhost:9090) scrapes the application's /metrics endpoint.
-- Grafana (http://localhost:3000) can be used to visualize Prometheus metrics (default admin/admin).
-
-Start everything:
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-Then open Grafana at http://localhost:3000 and add Prometheus (http://prometheus:9090 or http://host.docker.internal:9090) as a data source. Use `admin` / `admin` as the password unless changed.
-
 ## Kubernetes Deployment
 
 A Helm chart for the application is available at `charts/djblog`.
