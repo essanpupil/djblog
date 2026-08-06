@@ -3,6 +3,8 @@ Django settings for djblog project.
 """
 
 import os
+import json
+import logging
 import dj_database_url
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +34,7 @@ USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
 INSTALLED_APPS = [
+    'django_prometheus',
     'blog.apps.BlogConfig',
 
     'django.contrib.admin',
@@ -43,6 +46,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -51,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'djblog.urls'
@@ -175,11 +180,52 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Container Logging Configuration (Stream to stdout)
+# OpenTelemetry Trace Context & Loki Structured JSON Logging
+class OpenTelemetryLogFilter(logging.Filter):
+    def filter(self, record):
+        try:
+            from opentelemetry import trace
+            span = trace.get_current_span()
+            if span and span.get_span_context().is_valid:
+                ctx = span.get_span_context()
+                record.trace_id = f"{ctx.trace_id:032x}"
+                record.span_id = f"{ctx.span_id:016x}"
+            else:
+                record.trace_id = "0"
+                record.span_id = "0"
+        except Exception:
+            record.trace_id = "0"
+            record.span_id = "0"
+        return True
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_obj = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "trace_id": getattr(record, "trace_id", "0"),
+            "span_id": getattr(record, "span_id", "0"),
+            "module": record.module,
+            "line": record.lineno,
+        }
+        if record.exc_info:
+            log_obj["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_obj)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'otel_filter': {
+            '()': OpenTelemetryLogFilter,
+        },
+    },
     'formatters': {
+        'json': {
+            '()': JSONFormatter,
+        },
         'verbose': {
             'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
@@ -188,7 +234,8 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'filters': ['otel_filter'],
+            'formatter': 'json' if not DEBUG else 'verbose',
         },
     },
     'root': {

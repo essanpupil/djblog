@@ -41,6 +41,7 @@ def readyz(request):
 urlpatterns = [
     path('healthz', healthz, name='healthz'),
     path('readyz', readyz, name='readyz'),
+    path('', include('django_prometheus.urls')),
     path('admin/', admin.site.urls),
     path('', include('blog.urls')),
 ]
