@@ -104,3 +104,27 @@ helm install djblog ./charts/djblog \
   --set env.REDIS_HOST=redis.my-namespace.svc.cluster.local \
   --set env.REDIS_PASSWORD=your-redis-password
 ```
+
+## GitHub Actions
+
+This repository includes GitHub Actions workflows for CI and CD.
+
+- `/.github/workflows/ci.yml` runs on push and pull request and executes dependency installation, Django system checks, and application tests.
+- `/.github/workflows/cd.yml` runs on push to `master`/`main` and builds/pushes a container image to GitHub Container Registry. When `KUBE_CONFIG_DATA` is configured as a repository secret, it also deploys the Helm chart to the target Kubernetes cluster.
+
+### Required repository secrets for CD
+
+- `GITHUB_TOKEN` (provided automatically by GitHub Actions)
+- `KUBE_CONFIG_DATA` (base64-encoded kubeconfig file)
+- Optional secrets for Helm values when deploying:
+  - `DJANGO_SECRET_KEY`
+  - `DB_PASSWORD`
+  - `REDIS_PASSWORD`
+  - `DB_HOST`
+  - `REDIS_HOST`
+
+A base64-encoded kubeconfig can be generated locally with:
+
+```bash
+cat $HOME/.kube/config | base64 | tr -d '\n'
+```
