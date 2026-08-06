@@ -54,6 +54,22 @@ docker run -d -p 8000:8000 \
   --name djblog djblog:latest
 ```
 
+## Development with Docker Compose
+
+A development `docker-compose.yaml` is provided for local laptop usage.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+The compose setup includes:
+- `web` service built from the repository Dockerfile
+- `db` service using PostgreSQL
+- `redis` service using Redis
+
+The development web service mounts the project source code and a named staticfiles volume so changes are reflected immediately.
+
 ## Kubernetes Deployment
 
 A Helm chart for the application is available at `charts/djblog`.
