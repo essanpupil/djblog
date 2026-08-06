@@ -7,15 +7,29 @@ import dj_database_url
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'c_v=y!##vqy(2z&-m+78af3_qzlf*@nf8$of@jun)pd1@n#hhk')
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-key-change-in-production'
+    else:
+        raise ValueError("SECRET_KEY environment variable must be set in production (DEBUG=False).")
 
 allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
 if allowed_hosts_env:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 else:
-    ALLOWED_HOSTS = ['*']
+    ALLOWED_HOSTS = ['*'] if DEBUG else []
+
+csrf_trusted_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if csrf_trusted_origins_env:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_origins_env.split(',') if origin.strip()]
+
+# Reverse Proxy & Kubernetes Ingress Headers
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
@@ -60,11 +74,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'djblog.wsgi.application'
 
 # Database Configuration
+conn_max_age = int(os.environ.get('DB_CONN_MAX_AGE', '600'))
+
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
+            conn_max_age=conn_max_age,
             ssl_require=False
         )
     }
@@ -77,6 +93,7 @@ elif os.environ.get('DB_HOST'):
             'PASSWORD': os.environ.get('DB_PASSWORD', 'tulisanrahasia'),
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '5432'),
+            'CONN_MAX_AGE': conn_max_age,
         }
     }
 else:
@@ -102,6 +119,22 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# Security Hardening Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 't')
+
+hsts_seconds = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
+if hsts_seconds > 0:
+    SECURE_HSTS_SECONDS = hsts_seconds
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'

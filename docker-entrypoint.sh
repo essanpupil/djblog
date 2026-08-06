@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Wait for DB connection if DB_HOST is set or if DATABASE_URL is provided
+# Wait for DB connection if DB_HOST is set
 if [ -n "$DB_HOST" ]; then
     DB_P="${DB_PORT:-5432}"
     echo "[entrypoint] Checking database availability at $DB_HOST:$DB_P..."
@@ -24,10 +24,20 @@ fi
 
 PORT="${PORT:-8000}"
 WORKERS="${GUNICORN_WORKERS:-3}"
+THREADS="${GUNICORN_THREADS:-2}"
+TIMEOUT="${GUNICORN_TIMEOUT:-30}"
+KEEPALIVE="${GUNICORN_KEEPALIVE:-5}"
+MAX_REQUESTS="${GUNICORN_MAX_REQUESTS:-1000}"
+MAX_REQUESTS_JITTER="${GUNICORN_MAX_REQUESTS_JITTER:-50}"
 
-echo "[entrypoint] Launching Gunicorn WSGI server on 0.0.0.0:$PORT with $WORKERS workers..."
+echo "[entrypoint] Launching Gunicorn WSGI server on 0.0.0.0:$PORT ($WORKERS workers, $THREADS threads)..."
 exec gunicorn djblog.wsgi:application \
     --bind "0.0.0.0:$PORT" \
     --workers "$WORKERS" \
+    --threads "$THREADS" \
+    --timeout "$TIMEOUT" \
+    --keep-alive "$KEEPALIVE" \
+    --max-requests "$MAX_REQUESTS" \
+    --max-requests-jitter "$MAX_REQUESTS_JITTER" \
     --access-logfile - \
     --error-logfile -
