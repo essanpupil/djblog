@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "djblog.fullname" . }}
+  labels:
+    {{ include "djblog.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "djblog.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{ include "djblog.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          env:
+            - name: PORT
+              value: "{{ .Values.service.port }}"
+            {{- $secretName := include "djblog.secretName" . }}
+            {{- if ne $secretName "" }}
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: SECRET_KEY
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: DB_PASSWORD
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: REDIS_PASSWORD
+            {{- else }}
+            - name: SECRET_KEY
+              value: {{ quote .Values.env.SECRET_KEY }}
+            - name: DB_PASSWORD
+              value: {{ quote .Values.env.DB_PASSWORD }}
+            - name: REDIS_PASSWORD
+              value: {{ quote .Values.env.REDIS_PASSWORD }}
+            {{- end }}
+            {{- if and .Values.redis.enabled (not .Values.env.REDIS_HOST) }}
+            - name: REDIS_HOST
+              value: {{ quote (include "djblog.redisServiceName" .) }}
+            {{- end }}
+            {{- range $name, $value := .Values.env }}
+            {{- if not (hasKey (dict "SECRET_KEY" "" "DB_PASSWORD" "" "REDIS_PASSWORD" "" "REDIS_HOST" "") $name) }}
+            - name: {{ $name }}
+              value: {{ quote $value }}
+            {{- end }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}

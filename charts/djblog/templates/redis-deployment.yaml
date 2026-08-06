@@ -1,0 +1,38 @@
+{{- if .Values.redis.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "djblog.redisServiceName" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "djblog.redisServiceName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "djblog.redisServiceName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "djblog.redisServiceName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+    spec:
+      containers:
+        - name: redis
+          image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.redis.service.port }}
+              name: redis
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+      nodeSelector:
+        {{- toYaml .Values.redis.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.redis.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.redis.affinity | nindent 8 }}
+{{- end }}

@@ -1,0 +1,64 @@
+name: "Laptop Staging Environment"
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: blogdb
+      POSTGRES_USER: djblogger
+      POSTGRES_PASSWORD: tulisanrahasia
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+
+  djblog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      tags:
+        - djblog:latest
+    develop:
+      watch:
+        - path: .
+          action: rebuild
+    depends_on:
+      - db
+      - redis
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+      STATIC_ROOT: /app/staticfiles
+      STATIC_URL: 'http://localhost:8001/'
+      ALLOWED_HOSTS: 127.0.0.1,localhost
+      DEBUG: 'False'
+      RUN_COLLECTSTATIC: 'True'
+    volumes:
+      - .:/app:cached
+      - staticfiles:/app/staticfiles
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  static_djblog:
+    image: nginx:1.28-alpine
+    depends_on:
+      - djblog
+    ports:
+      - "8001:80"
+    volumes:
+      - staticfiles:/usr/share/nginx/html:ro
+
+volumes:
+  db_data:
+  staticfiles:

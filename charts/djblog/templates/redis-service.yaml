@@ -1,0 +1,20 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "djblog.redisServiceName" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "djblog.redisServiceName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: {{ .Values.redis.service.type }}
+  ports:
+    - port: {{ .Values.redis.service.port }}
+      targetPort: {{ .Values.redis.service.port }}
+      protocol: TCP
+      name: redis
+  selector:
+    app.kubernetes.io/name: {{ include "djblog.redisServiceName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

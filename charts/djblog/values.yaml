@@ -1,0 +1,82 @@
+replicaCount: 1
+
+image:
+  repository: djblog
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+redis:
+  enabled: false
+  image:
+    repository: redis
+    tag: 7.0-alpine
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 6379
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+secret:
+  enabled: false
+  existingSecret: ""
+  name: djblog-secret
+  djangoSecretKey: ""
+  dbPassword: ""
+  redisPassword: ""
+
+env:
+  DEBUG: "False"
+  SECRET_KEY: ""
+  ALLOWED_HOSTS: ""
+  CSRF_TRUSTED_ORIGINS: ""
+  DATABASE_URL: ""
+  DB_HOST: ""
+  DB_PORT: "5432"
+  DB_NAME: "blogdb"
+  DB_USER: "djblogger"
+  DB_PASSWORD: ""
+  REDIS_URL: ""
+  REDIS_HOST: ""
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_PASSWORD: ""
+  ENABLE_OTEL: "False"
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
+  OTEL_SERVICE_NAME: "djblog"
+  SECURE_SSL_REDIRECT: "False"
+  SECURE_HSTS_SECONDS: "31536000"
+  DJANGO_LOG_LEVEL: "INFO"
+  RUN_MIGRATIONS: "true"
+  RUN_COLLECTSTATIC: "true"
+  GUNICORN_WORKERS: "3"
+  GUNICORN_THREADS: "2"
+  GUNICORN_TIMEOUT: "30"
+  GUNICORN_KEEPALIVE: "5"
+  GUNICORN_MAX_REQUESTS: "1000"
+  GUNICORN_MAX_REQUESTS_JITTER: "50"
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
