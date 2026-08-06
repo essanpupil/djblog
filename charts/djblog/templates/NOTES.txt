@@ -1,0 +1,18 @@
+Thank you for installing {{ .Chart.Name }}.
+
+The Django application is exposed through a Kubernetes Service named {{ include "djblog.fullname" . }}.
+
+To check the status of the deployment:
+  kubectl rollout status deployment/{{ include "djblog.fullname" . }}
+
+If ingress is enabled, access the application via the configured host(s):
+{{- range .Values.ingress.hosts }}
+  - http://{{ .host }}
+{{- end }}
+
+If secret support is enabled, you can override or provide values with:
+  helm upgrade --install {{ .Release.Name }} . \
+    --set secret.enabled=true \
+    --set secret.djangoSecretKey="<secure-key>" \
+    --set secret.dbPassword="<db-password>" \
+    --set secret.redisPassword="<redis-password>"

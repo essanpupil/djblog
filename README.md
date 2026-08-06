@@ -53,3 +53,34 @@ docker run -d -p 8000:8000 \
   -e DEBUG=False \
   --name djblog djblog:latest
 ```
+
+## Kubernetes Deployment
+
+A Helm chart for the application is available at `charts/djblog`.
+
+The chart deploys the Django application as a `Deployment` and exposes it through a `Service`. External dependencies like PostgreSQL, Redis, and an optional OpenTelemetry collector must be provided separately.
+
+Example install:
+
+```bash
+helm install djblog ./charts/djblog \
+  --set image.repository=your-registry/djblog \
+  --set image.tag=latest \
+  --set env.SECRET_KEY=your-production-secret-key \
+  --set env.DB_HOST=postgres-host \
+  --set env.DB_USER=djblogger \
+  --set env.DB_PASSWORD=your-db-password \
+  --set env.REDIS_HOST=redis-host \
+  --set env.REDIS_PASSWORD=your-redis-password \
+  --set env.ALLOWED_HOSTS=your.host.example.com
+```
+
+For secret values, you can enable the chart-managed Kubernetes Secret or provide your own existing secret name:
+
+```bash
+helm install djblog ./charts/djblog \
+  --set secret.enabled=true \
+  --set secret.djangoSecretKey=your-production-secret-key \
+  --set secret.dbPassword=your-db-password \
+  --set secret.redisPassword=your-redis-password
+```
