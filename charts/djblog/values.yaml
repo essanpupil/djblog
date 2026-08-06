@@ -20,6 +20,20 @@ ingress:
           pathType: ImplementationSpecific
   tls: []
 
+redis:
+  enabled: false
+  image:
+    repository: redis
+    tag: 7.0-alpine
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 6379
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
 secret:
   enabled: false
   existingSecret: ""

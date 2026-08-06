@@ -26,3 +26,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- "" -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "djblog.redisServiceName" -}}
+{{- printf "%s-redis" (include "djblog.fullname" .) -}}
+{{- end -}}

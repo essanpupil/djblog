@@ -16,3 +16,11 @@ If secret support is enabled, you can override or provide values with:
     --set secret.djangoSecretKey="<secure-key>" \
     --set secret.dbPassword="<db-password>" \
     --set secret.redisPassword="<redis-password>"
+
+To deploy an in-cluster Redis instance, enable `redis.enabled`:
+  helm upgrade --install {{ .Release.Name }} . \
+    --set redis.enabled=true
+
+To use an existing Redis service, leave `redis.enabled` disabled and set `env.REDIS_HOST`:
+  helm upgrade --install {{ .Release.Name }} . \
+    --set env.REDIS_HOST="redis.example.svc.cluster.local"

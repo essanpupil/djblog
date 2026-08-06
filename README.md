@@ -84,3 +84,23 @@ helm install djblog ./charts/djblog \
   --set secret.dbPassword=your-db-password \
   --set secret.redisPassword=your-redis-password
 ```
+
+To deploy a bundled Redis instance for the application, enable Redis in the chart and let the chart wire the host automatically:
+
+```bash
+helm install djblog ./charts/djblog \
+  --set redis.enabled=true \
+  --set image.repository=your-registry/djblog \
+  --set image.tag=latest \
+  --set env.SECRET_KEY=your-production-secret-key \
+  --set env.DB_HOST=postgres-host \
+  --set env.DB_PASSWORD=your-db-password
+```
+
+To use an existing Redis service instead, leave `redis.enabled` disabled and provide the Redis host and optional password via environment values:
+
+```bash
+helm install djblog ./charts/djblog \
+  --set env.REDIS_HOST=redis.my-namespace.svc.cluster.local \
+  --set env.REDIS_PASSWORD=your-redis-password
+```
