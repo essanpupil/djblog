@@ -11,7 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'djblog.settings')
 otlp_endpoint = os.environ.get('OTEL_EXPORTER_OTLP_ENDPOINT', '')
 service_name = os.environ.get('OTEL_SERVICE_NAME', 'djblog')
 
-if otlp_endpoint or os.environ.get('ENABLE_OTEL', 'False').lower() in ('true', '1', 't'):
+if otlp_endpoint and os.environ.get('ENABLE_OTEL', 'False').lower() in ('true', '1', 't'):
     try:
         from opentelemetry import trace
         from opentelemetry.sdk.trace import TracerProvider

@@ -1,5 +1,5 @@
 # Stage 1: Build virtual environment
-FROM python:3.8-slim AS builder
+FROM python:3.14-slim-trixie AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Final minimal runtime image
-FROM python:3.8-slim AS runner
+FROM python:3.14-slim-trixie AS runner
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
