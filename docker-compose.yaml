@@ -26,9 +26,6 @@ services:
       watch:
         - path: .
           action: rebuild
-    post_start:
-      - command: python manage.py collectstatic --noinput
-        # user: root
     depends_on:
       - db
       - redis
@@ -43,6 +40,7 @@ services:
       STATIC_URL: 'http://localhost:8001/'
       ALLOWED_HOSTS: 127.0.0.1,localhost
       DEBUG: 'False'
+      RUN_COLLECTSTATIC: 'True'
     volumes:
       - .:/app:cached
       - staticfiles:/app/staticfiles
